@@ -1,0 +1,282 @@
+{
+  "K": {
+    "name": "S.K",
+    "sig": "a -> b -> a",
+    "description": "The K combinator. Takes two values and returns the first. Equivalent to\nHaskell's `const` function.\n\n  > S.K('foo', 'bar')\n  \"foo\"\n  > R.map(S.K(42), R.range(0, 5))\n  [42, 42, 42, 42, 42]\n"
+  },
+  "Maybe": {
+    "name": "S.Maybe",
+    "sig": "Type",
+    "description": "The Maybe type represents optional values: a value of type `Maybe a` is\neither a Just whose value is of type `a` or a Nothing (with no value).\n\nThe Maybe type satisfies the [Monoid][] and [Monad][] specifications.\n"
+  },
+  "Maybe.empty": {
+    "name": "S.Maybe.empty",
+    "sig": "-> Maybe a",
+    "description": "Returns a Nothing.\n\n  > S.Maybe.empty()\n  Nothing()\n"
+  },
+  "Maybe.of": {
+    "name": "S.Maybe.of",
+    "sig": "a -> Maybe a",
+    "description": "Takes a value of any type and returns a Just with the given value.\n\n  > S.Maybe.of(42)\n  Just(42)\n"
+  },
+  "Maybe.prototype.ap": {
+    "name": "S.Maybe#ap",
+    "sig": "Maybe (a -> b) ~> Maybe a -> Maybe b",
+    "description": "Takes a value of type `Maybe a` and returns a Nothing unless `this`\nis a Just *and* the argument is a Just, in which case it returns a\nJust whose value is the result of of applying this Just's value to\nthe given Just's value.\n\n  > S.Nothing().ap(S.Just(42))\n  Nothing()\n\n  > S.Just(R.inc).ap(S.Nothing())\n  Nothing()\n\n  > S.Just(R.inc).ap(S.Just(42))\n  Just(43)\n"
+  },
+  "Maybe.prototype.chain": {
+    "name": "S.Maybe#chain",
+    "sig": "Maybe a ~> (a -> Maybe b) -> Maybe b",
+    "description": "Takes a function and returns `this` if `this` is a Nothing; otherwise\nit returns the result of applying the function to this Just's value.\n\n  > S.Nothing().chain(S.parseFloat)\n  Nothing()\n\n  > S.Just('xxx').chain(S.parseFloat)\n  Nothing()\n\n  > S.Just('12.34').chain(S.parseFloat)\n  Just(12.34)\n"
+  },
+  "Maybe.prototype.concat": {
+    "name": "S.Maybe#concat",
+    "sig": "Maybe a ~> Maybe a -> Maybe a",
+    "description": "Returns the result of concatenating two Maybe values of the same type.\n`a` must have a [Semigroup][] (indicated by the presence of a `concat`\nmethod).\n\nIf `this` is a Nothing and the argument is a Nothing, this method returns\na Nothing.\n\nIf `this` is a Just and the argument is a Just, this method returns a\nJust whose value is the result of concatenating this Just's value and\nthe given Just's value.\n\nOtherwise, this method returns the Just.\n\n  > S.Nothing().concat(S.Nothing())\n  Nothing()\n\n  > S.Just([1, 2, 3]).concat(S.Just([4, 5, 6]))\n  Just([1, 2, 3, 4, 5, 6])\n\n  > S.Nothing().concat(S.Just([1, 2, 3]))\n  Just([1, 2, 3])\n\n  > S.Just([1, 2, 3]).concat(S.Nothing())\n  Just([1, 2, 3])\n"
+  },
+  "Maybe.prototype.empty": {
+    "name": "S.Maybe#empty",
+    "sig": "Maybe a ~> Maybe a",
+    "description": "Returns a Nothing.\n\n  > S.Just(42).empty()\n  Nothing()\n"
+  },
+  "Maybe.prototype.equals": {
+    "name": "S.Maybe#equals",
+    "sig": "Maybe a ~> b -> Boolean",
+    "description": "Takes a value of any type and returns `true` if:\n\n  - it is a Nothing and `this` is a Nothing; or\n\n  - it is a Just and `this` is a Just, and their values are equal\n    according to [`R.equals`][R.equals].\n\n  > S.Nothing().equals(S.Nothing())\n  true\n\n  > S.Nothing().equals(null)\n  false\n\n  > S.Just([1, 2, 3]).equals(S.Just([1, 2, 3]))\n  true\n\n  > S.Just([1, 2, 3]).equals(S.Just([3, 2, 1]))\n  false\n\n  > S.Just([1, 2, 3]).equals(S.Nothing())\n  false\n"
+  },
+  "Maybe.prototype.filter": {
+    "name": "S.Maybe#filter",
+    "sig": "Maybe a ~> (a -> Boolean) -> Maybe a",
+    "description": "Takes a predicate and returns `this` if `this` is a Just whose value\nsatisfies the predicate; Nothing otherwise.\n\n  > S.Just(42).filter(function(n) { return n % 2 === 0; })\n  Just(42)\n\n  > S.Just(43).filter(function(n) { return n % 2 === 0; })\n  Nothing()\n"
+  },
+  "Maybe.prototype.map": {
+    "name": "S.Maybe#map",
+    "sig": "Maybe a ~> (a -> b) -> Maybe b",
+    "description": "Takes a function and returns `this` if `this` is a Nothing; otherwise\nit returns a Just whose value is the result of applying the function to\nthis Just's value.\n\n  > S.Nothing().map(R.inc)\n  Nothing()\n\n  > S.Just(42).map(R.inc)\n  Just(43)\n"
+  },
+  "Maybe.prototype.of": {
+    "name": "S.Maybe#of",
+    "sig": "Maybe a ~> b -> Maybe b",
+    "description": "Takes a value of any type and returns a Just with the given value.\n\n  > S.Nothing().of(42)\n  Just(42)\n"
+  },
+  "Maybe.prototype.toBoolean": {
+    "name": "S.Maybe#toBoolean",
+    "sig": "Maybe a ~> Boolean",
+    "description": "Returns `false` if `this` is a Nothing; `true` if `this` is a Just.\n\n  > S.Nothing().toBoolean()\n  false\n\n  > S.Just(42).toBoolean()\n  true\n"
+  },
+  "Maybe.prototype.toString": {
+    "name": "S.Maybe#toString",
+    "sig": "Maybe a ~> String",
+    "description": "Returns the string representation of the Maybe.\n\n  > S.Nothing().toString()\n  \"Nothing()\"\n\n  > S.Just([1, 2, 3]).toString()\n  \"Just([1, 2, 3])\"\n"
+  },
+  "Maybe.prototype.type": {
+    "name": "S.Maybe#type",
+    "sig": "Type",
+    "description": "A reference to the Maybe type. Useful for determining whether two\nvalues such as `S.Nothing()` and `S.Just(42)` are of the same type.\n"
+  },
+  "Nothing": {
+    "name": "S.Nothing",
+    "sig": "-> Maybe a",
+    "description": "Returns a Nothing. Though this is a constructor function the `new`\nkeyword needn't be used.\n\n  > S.Nothing()\n  Nothing()\n"
+  },
+  "Just": {
+    "name": "S.Just",
+    "sig": "a -> Maybe a",
+    "description": "Takes a value of any type and returns a Just with the given value.\nThough this is a constructor function the `new` keyword needn't be\nused.\n\n  > S.Just(42)\n  Just(42)\n"
+  },
+  "fromMaybe": {
+    "name": "S.fromMaybe",
+    "sig": "a -> Maybe a -> a",
+    "description": "Takes a default value and a Maybe, and returns the Maybe's value\nif the Maybe is a Just; the default value otherwise.\n\n  > S.fromMaybe(0, S.Just(42))\n  42\n\n  > S.fromMaybe(0, S.Nothing())\n  0\n"
+  },
+  "toMaybe": {
+    "name": "S.toMaybe",
+    "sig": "a? -> Maybe a",
+    "description": "Takes a value and returns Nothing if the value is null or undefined;\nJust the value otherwise.\n\n  > S.toMaybe(null)\n  Nothing()\n\n  > S.toMaybe(42)\n  Just(42)\n"
+  },
+  "encase": {
+    "name": "S.encase",
+    "sig": "(* -> a) -> (* -> Maybe a)",
+    "description": "Takes a function `f` which may throw and returns a curried function\n`g` which will not throw. The result of applying `g` is determined by\napplying `f` to the same arguments: if this succeeds, `g` returns Just\nthe result; otherwise `g` returns Nothing.\n\n  > S.encase(eval)('1 + 1')\n  Just(2)\n\n  > S.encase(eval)('1 +')\n  Nothing()\n"
+  },
+  "Either": {
+    "name": "S.Either",
+    "sig": "Type",
+    "description": "The Either type represents values with two possibilities: a value of type\n`Either a b` is either a Left whose value is of type `a` or a Right whose\nvalue is of type `b`.\n\nThe Either type satisfies the [Semigroup][] and [Monad][] specifications.\n"
+  },
+  "Either.of": {
+    "name": "S.Either.of",
+    "sig": "b -> Either a b",
+    "description": "Takes a value of any type and returns a Right with the given value.\n\n  > S.Either.of(42)\n  Right(42)\n"
+  },
+  "Either.prototype.ap": {
+    "name": "S.Either#ap",
+    "sig": "Either a (b -> c) ~> Either a b -> Either a c",
+    "description": "Takes a value of type `Either a b` and returns a Left unless `this`\nis a Right *and* the argument is a Right, in which case it returns\na Right whose value is the result of applying this Right's value to\nthe given Right's value.\n\n  > S.Left('Cannot divide by zero').ap(S.Right(42))\n  Left(\"Cannot divide by zero\")\n\n  > S.Right(R.inc).ap(S.Left('Cannot divide by zero'))\n  Left(\"Cannot divide by zero\")\n\n  > S.Right(R.inc).ap(S.Right(42))\n  Right(43)\n"
+  },
+  "Either.prototype.chain": {
+    "name": "S.Either#chain",
+    "sig": "Either a b ~> (b -> Either a c) -> Either a c",
+    "description": "Takes a function and returns `this` if `this` is a Left; otherwise\nit returns the result of applying the function to this Right's value.\n\n  > void (sqrt = function(n) { return n < 0 ? S.Left('Cannot represent square root of negative number') : S.Right(Math.sqrt(n)); })\n  undefined\n\n  > S.Left('Cannot divide by zero').chain(sqrt)\n  Left(\"Cannot divide by zero\")\n\n  > S.Right(-1).chain(sqrt)\n  Left(\"Cannot represent square root of negative number\")\n\n  > S.Right(25).chain(sqrt)\n  Right(5)\n"
+  },
+  "Either.prototype.concat": {
+    "name": "S.Either#concat",
+    "sig": "Either a b ~> Either a b -> Either a b",
+    "description": "Returns the result of concatenating two Either values of the same type.\n`a` must have a [Semigroup][] (indicated by the presence of a `concat`\nmethod), as must `b`.\n\nIf `this` is a Left and the argument is a Left, this method returns a\nLeft whose value is the result of concatenating this Left's value and\nthe given Left's value.\n\nIf `this` is a Right and the argument is a Right, this method returns a\nRight whose value is the result of concatenating this Right's value and\nthe given Right's value.\n\nOtherwise, this method returns the Right.\n\n  > S.Left('abc').concat(S.Left('def'))\n  Left(\"abcdef\")\n\n  > S.Right([1, 2, 3]).concat(S.Right([4, 5, 6]))\n  Right([1, 2, 3, 4, 5, 6])\n\n  > S.Left('abc').concat(S.Right([1, 2, 3]))\n  Right([1, 2, 3])\n\n  > S.Right([1, 2, 3]).concat(S.Left('abc'))\n  Right([1, 2, 3])\n"
+  },
+  "Either.prototype.equals": {
+    "name": "S.Either#equals",
+    "sig": "Either a b ~> c -> Boolean",
+    "description": "Takes a value of any type and returns `true` if:\n\n  - it is a Left and `this` is a Left, and their values are equal\n    according to [`R.equals`][R.equals]; or\n\n  - it is a Right and `this` is a Right, and their values are equal\n    according to [`R.equals`][R.equals].\n\n  > S.Right([1, 2, 3]).equals(S.Right([1, 2, 3]))\n  true\n\n  > S.Right([1, 2, 3]).equals(S.Left([1, 2, 3]))\n  false\n\n  > S.Right(42).equals(42)\n  false\n"
+  },
+  "Either.prototype.map": {
+    "name": "S.Either#map",
+    "sig": "Either a b ~> (b -> c) -> Either a c",
+    "description": "Takes a function and returns `this` if `this` is a Left; otherwise it\nreturns a Right whose value is the result of applying the function to\nthis Right's value.\n\n  > S.Left('Cannot divide by zero').map(R.inc)\n  Left(\"Cannot divide by zero\")\n\n  > S.Right(42).map(R.inc)\n  Right(43)\n"
+  },
+  "Either.prototype.of": {
+    "name": "S.Either#of",
+    "sig": "Either a b ~> b -> Either a b",
+    "description": "Takes a value of any type and returns a Right with the given value.\n\n  > S.Left('Cannot divide by zero').of(42)\n  Right(42)\n"
+  },
+  "Either.prototype.toBoolean": {
+    "name": "S.Either#toBoolean",
+    "sig": "Either a b ~> Boolean",
+    "description": "Returns `false` if `this` is a Left; `true` if `this` is a Right.\n\n  > S.Left(42).toBoolean()\n  false\n\n  > S.Right(42).toBoolean()\n  true\n"
+  },
+  "Either.prototype.toString": {
+    "name": "S.Either#toString",
+    "sig": "Either a b ~> String",
+    "description": "Returns the string representation of the Either.\n\n  > S.Left('Cannot divide by zero').toString()\n  \"Left(\\\\\"Cannot divide by zero\\\\\")\"\n\n  > S.Right([1, 2, 3]).toString()\n  \"Right([1, 2, 3])\"\n"
+  },
+  "Either.prototype.type": {
+    "name": "S.Either#type",
+    "sig": "Type",
+    "description": "A reference to the Either type. Useful for determining whether two\nvalues such as `S.Left('Cannot divide by zero')` and `S.Right(42)`\nare of the same type.\n"
+  },
+  "Left": {
+    "name": "S.Left",
+    "sig": "a -> Either a b",
+    "description": "Takes a value of any type and returns a Left with the given value.\nThough this is a constructor function the `new` keyword needn't be\nused.\n\n  > S.Left('Cannot divide by zero')\n  Left(\"Cannot divide by zero\")\n"
+  },
+  "Right": {
+    "name": "S.Right",
+    "sig": "b -> Either a b",
+    "description": "Takes a value of any type and returns a Right with the given value.\nThough this is a constructor function the `new` keyword needn't be\nused.\n\n  > S.Right(42)\n  Right(42)\n"
+  },
+  "either": {
+    "name": "S.either",
+    "sig": "(a -> c) -> (b -> c) -> Either a b -> c",
+    "description": "Takes two functions and an Either, and returns the result of\napplying the first function to the Left's value, if the Either\nis a Left, or the result of applying the second function to the\nRight's value, if the Either is a Right.\n\n  > S.either(R.toUpper, R.toString, S.Left('Cannot divide by zero'))\n  \"CANNOT DIVIDE BY ZERO\"\n\n  > S.either(R.toUpper, R.toString, S.Right(42))\n  \"42\"\n"
+  },
+  "and": {
+    "name": "S.and",
+    "sig": "a -> a -> a",
+    "description": "Takes two values of the same type and returns the second value\nif the first is \"true\"; the first value otherwise. An array is\nconsidered \"true\" if its length is greater than zero. The Boolean\nvalue `true` is also considered \"true\". Other types must provide\na `toBoolean` method.\n\n  > S.and(S.Just(1), S.Just(2))\n  Just(2)\n\n  > S.and(S.Nothing(), S.Just(3))\n  Nothing()\n"
+  },
+  "or": {
+    "name": "S.or",
+    "sig": "a -> a -> a",
+    "description": "Takes two values of the same type and returns the first value if it\nis \"true\"; the second value otherwise. An array is considered \"true\"\nif its length is greater than zero. The Boolean value `true` is also\nconsidered \"true\". Other types must provide a `toBoolean` method.\n\n  > S.or(S.Just(1), S.Just(2))\n  Just(1)\n\n  > S.or(S.Nothing(), S.Just(3))\n  Just(3)\n"
+  },
+  "xor": {
+    "name": "S.xor",
+    "sig": "a -> a -> a",
+    "description": "Takes two values of the same type and returns the \"true\" value\nif one value is \"true\" and the other is \"false\"; otherwise it\nreturns the type's \"false\" value. An array is considered \"true\"\nif its length is greater than zero. The Boolean value `true` is\nalso considered \"true\". Other types must provide `toBoolean` and\n`empty` methods.\n\n  > S.xor(S.Nothing(), S.Just(1))\n  Just(1)\n\n  > S.xor(S.Just(2), S.Just(3))\n  Nothing()\n"
+  },
+  "slice": {
+    "name": "S.slice",
+    "sig": "Number -> Number -> [a] -> Maybe [a]",
+    "description": "Returns Just a list containing the elements from the supplied list\nfrom a beginning index (inclusive) to an end index (exclusive).\nReturns Nothing unless the start interval is less than or equal to\nthe end interval, and the list contains both (half-open) intervals.\nAccepts negative indices, which indicate an offset from the end of\nthe list.\n\nDispatches to its third argument's `slice` method if present. As a\nresult, one may replace `[a]` with `String` in the type signature.\n\n  > S.slice(1, 3, ['a', 'b', 'c', 'd', 'e'])\n  Just([\"b\", \"c\"])\n\n  > S.slice(-2, -0, ['a', 'b', 'c', 'd', 'e'])\n  Just([\"d\", \"e\"])\n\n  > S.slice(2, -0, ['a', 'b', 'c', 'd', 'e'])\n  Just([\"c\", \"d\", \"e\"])\n\n  > S.slice(1, 6, ['a', 'b', 'c', 'd', 'e'])\n  Nothing()\n\n  > S.slice(2, 6, 'banana')\n  Just(\"nana\")\n"
+  },
+  "at": {
+    "name": "S.at",
+    "sig": "Number -> [a] -> Maybe a",
+    "description": "Takes an index and a list and returns Just the element of the list at\nthe index if the index is within the list's bounds; Nothing otherwise.\nA negative index represents an offset from the length of the list.\n\n  > S.at(2, ['a', 'b', 'c', 'd', 'e'])\n  Just(\"c\")\n\n  > S.at(5, ['a', 'b', 'c', 'd', 'e'])\n  Nothing()\n\n  > S.at(-2, ['a', 'b', 'c', 'd', 'e'])\n  Just(\"d\")\n"
+  },
+  "head": {
+    "name": "S.head",
+    "sig": "[a] -> Maybe a",
+    "description": "Takes a list and returns Just the first element of the list if the\nlist contains at least one element; Nothing if the list is empty.\n\n  > S.head([1, 2, 3])\n  Just(1)\n\n  > S.head([])\n  Nothing()\n"
+  },
+  "last": {
+    "name": "S.last",
+    "sig": "[a] -> Maybe a",
+    "description": "Takes a list and returns Just the last element of the list if the\nlist contains at least one element; Nothing if the list is empty.\n\n  > S.last([1, 2, 3])\n  Just(3)\n\n  > S.last([])\n  Nothing()\n"
+  },
+  "tail": {
+    "name": "S.tail",
+    "sig": "[a] -> Maybe [a]",
+    "description": "Takes a list and returns Just a list containing all but the first\nof the list's elements if the list contains at least one element;\nNothing if the list is empty.\n\n  > S.tail([1, 2, 3])\n  Just([2, 3])\n\n  > S.tail([])\n  Nothing()\n"
+  },
+  "init": {
+    "name": "S.init",
+    "sig": "[a] -> Maybe [a]",
+    "description": "Takes a list and returns Just a list containing all but the last\nof the list's elements if the list contains at least one element;\nNothing if the list is empty.\n\n  > S.init([1, 2, 3])\n  Just([1, 2])\n\n  > S.init([])\n  Nothing()\n"
+  },
+  "take": {
+    "name": "S.take",
+    "sig": "Number -> [a] -> Maybe [a]",
+    "description": "Returns Just the first N elements of the given collection if N is\ngreater than or equal to zero and less than or equal to the length\nof the collection; Nothing otherwise. Supports Array, String, and\nany other collection type which provides a `slice` method.\n\n  > S.take(2, ['a', 'b', 'c', 'd', 'e'])\n  Just([\"a\", \"b\"])\n\n  > S.take(4, 'abcdefg')\n  Just(\"abcd\")\n\n  > S.take(4, ['a', 'b', 'c'])\n  Nothing()\n"
+  },
+  "drop": {
+    "name": "S.drop",
+    "sig": "Number -> [a] -> Maybe [a]",
+    "description": "Returns Just all but the first N elements of the given collection\nif N is greater than or equal to zero and less than or equal to the\nlength of the collection; Nothing otherwise. Supports Array, String,\nand any other collection type which provides a `slice` method.\n\n  > S.drop(2, ['a', 'b', 'c', 'd', 'e'])\n  Just([\"c\", \"d\", \"e\"])\n\n  > S.drop(4, 'abcdefg')\n  Just(\"efg\")\n\n  > S.drop(4, 'abc')\n  Nothing()\n"
+  },
+  "find": {
+    "name": "S.find",
+    "sig": "(a -> Boolean) -> [a] -> Maybe a",
+    "description": "Takes a predicate and a list and returns Just the leftmost element of\nthe list which satisfies the predicate; Nothing if none of the list's\nelements satisfies the predicate.\n\n  > S.find(function(n) { return n < 0; }, [1, -2, 3, -4, 5])\n  Just(-2)\n\n  > S.find(function(n) { return n < 0; }, [1, 2, 3, 4, 5])\n  Nothing()\n"
+  },
+  "indexOf": {
+    "name": "S.indexOf",
+    "sig": "a -> [a] -> Maybe Number",
+    "description": "Takes a value of any type and a list, and returns Just the index\nof the first occurrence of the value in the list, if applicable;\nNothing otherwise.\n\nDispatches to its second argument's `indexOf` method if present.\nAs a result, `String -> String -> Maybe Number` is an alternative\ntype signature.\n\n  > S.indexOf('a', ['b', 'a', 'n', 'a', 'n', 'a'])\n  Just(1)\n\n  > S.indexOf('x', ['b', 'a', 'n', 'a', 'n', 'a'])\n  Nothing()\n\n  > S.indexOf('an', 'banana')\n  Just(1)\n\n  > S.indexOf('ax', 'banana')\n  Nothing()\n"
+  },
+  "lastIndexOf": {
+    "name": "S.lastIndexOf",
+    "sig": "a -> [a] -> Maybe Number",
+    "description": "Takes a value of any type and a list, and returns Just the index\nof the last occurrence of the value in the list, if applicable;\nNothing otherwise.\n\nDispatches to its second argument's `lastIndexOf` method if present.\nAs a result, `String -> String -> Maybe Number` is an alternative\ntype signature.\n\n  > S.lastIndexOf('a', ['b', 'a', 'n', 'a', 'n', 'a'])\n  Just(5)\n\n  > S.lastIndexOf('x', ['b', 'a', 'n', 'a', 'n', 'a'])\n  Nothing()\n\n  > S.lastIndexOf('an', 'banana')\n  Just(3)\n\n  > S.lastIndexOf('ax', 'banana')\n  Nothing()\n"
+  },
+  "pluck": {
+    "name": "S.pluck",
+    "sig": "String -> [{String: *}] -> [Maybe *]",
+    "description": "Takes a list of objects and plucks the value of the specified key\nfor each object in the list. Returns the value wrapped in a Just\nif an object has the key and a Nothing if it does not.\n\n  > S.pluck('a', [{a: 1, b: 2}, {a: 4, b: 5}, {b: 3, c: 7}])\n  [Just(1), Just(4), Nothing()]\n\n  > S.pluck('x', [{x: 1}, {x: 2}, {x: undefined}])\n  [Just(1), Just(2), Just(undefined)]\n"
+  },
+  "get": {
+    "name": "S.get",
+    "sig": "String -> Object -> Maybe *",
+    "description": "Takes a property name and an object and returns Just the value of\nthe specified property of the object if the object has such an own\nproperty; Nothing otherwise.\n\n  > S.get('x', {x: 1, y: 2})\n  Just(1)\n\n  > S.get('toString', {x: 1, y: 2})\n  Nothing()\n"
+  },
+  "gets": {
+    "name": "S.gets",
+    "sig": "[String] -> Object -> Maybe *",
+    "description": "Takes a list of property names and an object and returns Just the\nvalue at the path specified by the list of property names if such\na path exists; Nothing otherwise.\n\n  > S.gets(['a', 'b', 'c'], {a: {b: {c: 42}}})\n  Just(42)\n\n  > S.gets(['a', 'b', 'c'], {})\n  Nothing()\n"
+  },
+  "parseDate": {
+    "name": "S.parseDate",
+    "sig": "String -> Maybe Date",
+    "description": "Takes a string and returns Just the date represented by the string\nif it does in fact represent a date; Nothing otherwise.\n\n  > S.parseDate('2011-01-19T17:40:00Z')\n  Just(new Date(\"2011-01-19T17:40:00.000Z\"))\n\n  > S.parseDate('today')\n  Nothing()\n"
+  },
+  "parseFloat": {
+    "name": "S.parseFloat",
+    "sig": "String -> Maybe Number",
+    "description": "Takes a string and returns Just the number represented by the string\nif it does in fact represent a number; Nothing otherwise.\n\n  > S.parseFloat('-123.45')\n  Just(-123.45)\n\n  > S.parseFloat('foo.bar')\n  Nothing()\n"
+  },
+  "parseInt": {
+    "name": "S.parseInt",
+    "sig": "Number -> String -> Maybe Number",
+    "description": "Takes a radix (an integer between 2 and 36 inclusive) and a string,\nand returns Just the number represented by the string if it does in\nfact represent a number in the base specified by the radix; Nothing\notherwise.\n\nThis function is stricter than [`parseInt`][parseInt]: a string\nis considered to represent an integer only if all its non-prefix\ncharacters are members of the character set specified by the radix.\n\n  > S.parseInt(10, '-42')\n  Just(-42)\n\n  > S.parseInt(16, '0xFF')\n  Just(255)\n\n  > S.parseInt(16, '0xGG')\n  Nothing()\n"
+  },
+  "parseJson": {
+    "name": "S.parseJson",
+    "sig": "String -> Maybe *",
+    "description": "Takes a string which may or may not be valid JSON, and returns Just\nthe result of applying `JSON.parse` to the string if valid; Nothing\notherwise.\n\n  > S.parseJson('[\"foo\",\"bar\",\"baz\"]')\n  Just([\"foo\", \"bar\", \"baz\"])\n\n  > S.parseJson('[')\n  Nothing()\n"
+  },
+  "match": {
+    "name": "S.match",
+    "sig": "RegExp -> String -> Maybe [Maybe String]",
+    "description": "Takes a pattern and a string, and returns Just a list of matches\nif the pattern matches the string; Nothing otherwise. Each match\nhas type `Maybe String`, where a Nothing represents an unmatched\noptional capturing group.\n\n  > S.match(/(good)?bye/, 'goodbye')\n  Just([Just(\"goodbye\"), Just(\"good\")])\n\n  > S.match(/(good)?bye/, 'bye')\n  Just([Just(\"bye\"), Nothing()])\n"
+  }
+}

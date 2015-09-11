@@ -1,0 +1,226 @@
+#!/usr/bin/env node
+
+'use strict';
+
+var fs = require('fs');
+var pathlib = require('path');
+var repl = require('repl');
+var vm = require('vm');
+
+
+// Expose R and S to the REPL context.
+global.R = require('ramda');
+global.S = require('sanctuary');
+
+// Expose Ramda and Sanctuary exports to the REPL context, so they may be
+// used unprefixed. Sanctuary bindings trump Ramda bindings when resolving
+// collisions. This means `head` will reference `S.head` rather than `R.head`.
+// One may, of course, access the latter using its canonical form.
+R.mapObjIndexed(function(v, k) { if (!R.has(k, global)) global[k] = v; }, S);
+R.mapObjIndexed(function(v, k) { if (!R.has(k, global)) global[k] = v; }, R);
+
+
+//  _quote :: String -> String
+var _quote = function(s) {
+  var escaped = s
+    .replace(/\\/g, '\\\\')
+    .replace(/[\b]/g, '\\b')  // \b matches word boundary; [\b] matches backspace
+    .replace(/\f/g, '\\f')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/\t/g, '\\t')
+    .replace(/\v/g, '\\v')
+    .replace(/\0/g, '\\0');
+
+  return '"' + escaped.replace(/"/g, '\\"') + '"';
+};
+
+//  toString :: * -> String
+//
+//  Patched version of R.toString for use until ramda/ramda#1331 is included
+//  in a release.
+var toString = function(x) {
+  return (
+    typeof x === 'string' ?
+      _quote(x) :
+    type(x) === 'String' ?
+      'new String(' + _quote(x.valueOf()) + ')' :
+    // else
+      R.toString(x)
+  );
+};
+
+//  wrap :: String -> String -> String -> String
+var wrap  = curry(function(a, z, middle) { return a + middle + z; });
+
+var red   = wrap('\u001B[31m', '\u001B[0m');
+var brown = wrap('\u001B[33m', '\u001B[0m');
+var cyan  = wrap('\u001B[36m', '\u001B[0m');
+var grey  = wrap('\u001B[37m', '\u001B[0m');
+
+//  indent :: String -> String
+var indent = replace(/^(?!$)/gm, '  ');
+
+//  src :: String
+var src = fs.readFileSync(pathlib.join(__dirname, 'node_modules', 'sanctuary', 'index.js'),
+                          {encoding: 'utf8'});
+
+var formatErr = function(msg) {
+  return indent(red(msg) + '\n');
+};
+
+var formatSig = function(doc) {
+  return '  ' + cyan(doc.name + ' :: ' + doc.sig) + '\n';
+};
+
+var hasOwnPath = function(path, obj) {
+  var x = obj;
+  for (var idx = 0; idx < path.length; idx += 1) {
+    if (has(path[idx], x)) {
+      x = x[path[idx]];
+    } else {
+      return false;
+    }
+  }
+  return true;
+};
+
+var docs = {
+  R: require('./ramda.json'),
+  S: require('./sanctuary.json'),
+};
+
+var describe = function(_name, format) {
+  var name = replace(/#/g, '.prototype.', _name);
+  var m = /^(R|S)[.](.*)$/.exec(name);
+  return (
+    m != null && has(m[2], docs[m[1]]) ?
+      format(docs[m[1]][m[2]]) :
+    m != null && hasOwnPath(split('.', m[2]), global[m[1]]) ?
+      formatErr('No info available for ‘' + name + '’') :
+    m != null && m[1] === 'R' ?
+      formatErr('Ramda does not export ‘' + m[2] + '’') :
+    m != null ?
+      formatErr('Sanctuary does not export ‘' + m[2] + '’') :
+    has(name, docs.S) ?
+      format(docs.S[name]) :
+    has(name, docs.R) ?
+      format(docs.R[name]) :
+    hasOwnPath(split('.', name), S) ?
+      formatErr('No info available for ‘S.' + name + '’') :
+    // else
+      formatErr('Neither Ramda nor Sanctuary exports ‘' + name + '’')
+  );
+};
+
+var help = join('\n', [
+  '<expr>          Evaluate the given expression and print the result.',
+  ':type <name>    Print the signature of the given Ramda or Sanctuary function.',
+  ':info <name>    Print the docstring of the given Ramda or Sanctuary function.',
+  ':quit           Exit the REPL.',
+  '',
+  'The R and S objects are exposed, as are their own properties (except',
+  'those which conflict with a global such as parseFloat). For "head" and',
+  'other properties common to R and S, the Sanctuary definition is chosen.',
+]);
+
+var $lines = [];
+
+var evaluate = function(line) {
+  $lines.push(line);
+  var lines = $lines;
+  $lines = [];
+
+  var input = join('\n', lines);
+
+  if (/^:/.test(input)) {
+    var xs = split(/\s+/, replace(/\s+$/, '', input));
+    switch (xs[0]) {
+      case ':?':
+      case ':h':
+      case ':help':
+        console.log(indent('\n' + grey(help) + '\n'));
+        return;
+      case ':i':
+      case ':info':
+        if (xs.length < 2) {
+          console.log(formatErr(xs[0] + ' requires an argument'));
+        } else {
+          console.log(describe(xs[1], function(doc) {
+            return formatSig(doc) + '\n' +
+                   cyan(indent(replace(/\n+$/, '', doc.description))) + '\n';
+          }));
+        }
+        return;
+      case ':q':
+      case ':quit':
+        process.exit(0);
+        return;
+      case ':t':
+      case ':type':
+        if (xs.length < 2) {
+          console.log(formatErr(xs[0] + ' requires an argument'));
+        } else {
+          console.log(describe(xs[1], formatSig));
+        }
+        return;
+      default:
+        console.log(formatErr(xs[0] + ' is not a recognized command'));
+        return;
+    }
+  }
+
+  var script;
+  try {
+    script = new vm.Script(input);
+  } catch (err) {
+    if (err.constructor === SyntaxError &&
+        /^(Unexpected end of input|Unexpected token)$/m.test(err.message)) {
+      $lines = lines;
+      return;
+    }
+    console.log(formatErr(replace(/^.*\n/, '', err.message)));
+    return;
+  }
+
+  var result;
+  try {
+    result = script.runInThisContext();
+  } catch (err) {
+    console.log(formatErr(replace(/^.*\n/, '', err.message)));
+    return;
+  }
+  if (result === undefined) {
+    console.log();
+  }
+  return result;
+};
+
+
+pipe(
+  split('\n'),
+  R.take(9),
+  map(replace('/*', '  ')),
+  map(replace('*/', '  ')),
+  map(invoker(0, 'trimRight')),
+  map(concat('  ')),
+  join('\n'),
+  split('sanctuary'),
+  map(brown),
+  join('sanctuary'),
+  wrap('\n', '\n'),
+  console.log
+)(src);
+
+
+repl.start({
+  prompt: grey('|') + ' ',
+  terminal: false,
+  eval: function(cmd, context, filename, callback) {
+    callback(null, evaluate(cmd));
+  },
+  ignoreUndefined: true,
+  writer: function(x) {
+    return grey('=') + ' ' + brown(toString(x)) + '\n';
+  },
+});

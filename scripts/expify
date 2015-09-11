@@ -1,0 +1,41 @@
+#!/usr/bin/env node
+
+'use strict';
+
+if (process.argv.length < 3) {
+  process.stderr.write('No filename specified\n');
+  process.exit(1);
+}
+
+var input = require('fs').readFileSync(process.argv[2], {encoding: 'utf8'});
+var lines = input.split(/^/m);
+
+var output = [
+  '#!/usr/bin/env expect -f',
+  '',
+  'set timeout 1',
+  'spawn ./repl',
+].join('\n') + '\n\n';
+
+var red   = function(s) { return '\\u001B\\[31m' + s + '\\u001B\\[0m'; };
+var brown = function(s) { return '\\u001B\\[33m' + s + '\\u001B\\[0m'; };
+var cyan  = function(s) { return '\\u001B\\[36m' + s + '\\u001B\\[0m'; };
+var grey  = function(s) { return '\\u001B\\[37m' + s + '\\u001B\\[0m'; };
+
+for (var prev = '', idx = 0; idx < lines.length; idx += 1) {
+  var match = /^(>>> )?(.*)\n$/.exec(lines[idx]);
+  var expr = match[2].replace(/[[\\$"]/g, '\\$&');
+  output += match[1] ?
+    'expect -ex "' + grey('|') + ' " {} default { exit 1 }\n' +
+    'send "' + expr + '\\n"\n' +
+    'expect -ex "' + expr + '\\r\\n' : grey('=') + ' ' + brown(expr) + '" {} default {\n' +
+    '  expect "*" {\n' +
+    '    send_error "\\nExpected:\\n' + prev + '\\n' + grey('=') + ' ' + brown(expr) + '\\n"\n' +
+    '    send_error "\\nReceived:\\n$expect_out(buffer)\\n"\n' +
+    '    exit 1\n' +
+    '  }\n' +
+    '}\n';
+  prev = expr;
+}
+
+process.stdout.write(output);

@@ -1,0 +1,9 @@
+{
+  "name": "sanctuary-repl",
+  "version": "0.0.0",
+  "dependencies": {
+    "ramda": "0.17.1",
+    "sanctuary": "0.7.0"
+  },
+  "devDependencies": {}
+}
